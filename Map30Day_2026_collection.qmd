@@ -1,7 +1,116 @@
 ---
-title: "Map30Day_2026_collection"
+title: "30DayMapChallenge 2026"
 author: "Xiao Cui"
 format: html
 ---
 
 #### Title box
+```{r}
+library(sf)
+library(terra)
+library(dplyr)
+library(mapview)
+library(tmap)
+library(ggplot2)
+grid_us_sf <- sf::st_read("data/ne_110m_graticules_10.shp")
+line_100W_sf <- grid_us_sf |>
+  dplyr::filter(display == "100 W")
+ppt_2025_rs <- terra::rast("data/prism_ppt_us_30s_2025.tif")
+```
+
+```{r}
+tmap_mode("plot")
+
+# 1. Define precipitation intervals
+my_breaks <- c(
+  0, 200, 400, 600, 800,
+  1000, 1500, 2000, 3000, Inf
+)
+
+# 2. Define legend labels
+my_labels <- c(
+  "0–200",
+  "200–400",
+  "400–600",
+  "600–800",
+  "800–1000",
+  "1000–1500",
+  "1500–2000",
+  "2000–3000",
+  "> 3000"
+)
+
+# 3. Define colors
+my_cols <- hcl.colors(
+  length(my_breaks) - 1,
+  palette = "Spectral",
+  rev = FALSE
+)
+
+# 4. Create map
+map_ppt <-
+  tmap::tm_shape(ppt_2025_rs) +
+  tm_title("What does 'The 100th meridian' mean for the U.S.?", fontfamily = "serif") +
+  tmap::tm_raster(
+    col.scale = tmap::tm_scale_intervals(
+      style = "fixed",
+      breaks = my_breaks,
+      values = my_cols,
+      labels = my_labels,
+      interval.closure = "left"
+    ),
+    col.legend = tmap::tm_legend(
+      title = "Total annual\nprecipitation (in.),\n2025",
+      title.size = 0.7,
+      text.size = 0.7,
+      bg.color = "white",
+      bg.alpha = 0.6,
+      position = tmap::tm_pos_in("left", "bottom"),
+      frame = TRUE
+    )
+  ) +
+  tmap::tm_graticules(
+    labels.size = 0.7
+  ) +
+  tmap::tm_compass(
+    position = tmap::tm_pos_in("right", "top")
+  ) +
+  tmap::tm_shape(line_100W_sf) +
+  tmap::tm_lines(
+    lwd = 6,
+    col = "black"
+  ) +
+
+  # Manually add the 100th meridian legend
+  tmap::tm_add_legend(
+    type = "lines",
+    labels = "100th meridian",
+    col = "black",
+    lwd = 6,
+    title = "",
+    title.size = 1,
+    text.size = 1,
+    bg.color = "white",
+    bg.alpha = 0.7,
+    position = tmap::tm_pos_in("right", "bottom"),
+    frame = TRUE
+  ) +tm_credits(
+    "© NACSE",size = 0.7,
+    position = c("left", "bottom"), bg = TRUE
+  )+
+  tm_credits(
+    "\n2/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("right", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("right", "bottom"), bg = TRUE
+  )+
+
+  tmap::tm_layout(
+    scale = 1.0
+  )
+
+# Display
+map_ppt
+```
