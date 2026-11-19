@@ -2,10 +2,19 @@
 title: "30DayMapChallenge 2026"
 author: "Xiao Cui"
 format: html
+date: "`r Sys.Date()`"
+theme: minty
+lang: en
+warning: false
+number-sections: true
 ---
 
-#### Title box
-```{r}
+# Day 2: Lines
+
+```{r day2pre}
+#| code-summary: "load packages and data, set map options"
+#| code-fold: true
+#| code-line-numbers: false
 library(sf)
 library(terra)
 library(dplyr)
@@ -18,7 +27,10 @@ line_100W_sf <- grid_us_sf |>
 ppt_2025_rs <- terra::rast("data/prism_ppt_us_30s_2025.tif")
 ```
 
-```{r}
+```{r day2mapping}
+#| code-summary: "Mapping"
+#| code-fold: true
+#| code-line-numbers: false
 tmap_mode("plot")
 
 # 1. Define precipitation intervals
