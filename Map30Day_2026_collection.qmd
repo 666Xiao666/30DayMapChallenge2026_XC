@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 theme: minty
 lang: en
 warning: false
+cache: true
 number-sections: true
 format:
   html:
@@ -27,6 +28,12 @@ library(ggplot2)
 library(geogrid)
 library(maptiles)
 library(raster)
+library(tidyr)
+library(tmaptools)
+library(tmap.cartogram)
+library(tidyverse)
+library(rnaturalearth)
+library(geodata)
 ```
 
 # Points
@@ -423,3 +430,604 @@ tm_layout(earth_boundary = TRUE,
     scale = 1.1
   )
 ```
+
+# Urban-rural
+
+```{r day9pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+# load raw data
+GHS_SMOD_vienna <- terra::rast("data/GHS-SMOD-Vienna-2025-2030.tif")
+# Convert 0 to NA
+GHS_SMOD_vienna_clean <- terra::ifel(
+  GHS_SMOD_vienna == 0,
+  NA,
+  GHS_SMOD_vienna
+)
+# Trim the raster extent to valid cells
+GHS_SMOD_vienna_clean <- terra::trim(
+  GHS_SMOD_vienna_clean
+)
+# Define categories
+smod_classes <- data.frame(
+  ID = c(11, 12, 13, 21, 30),
+  Class = c(
+    "Very low density rural",
+    "Low density rural",
+    "Rural cluster",
+    "Suburban",
+    "Urban centre"
+  )
+)
+# Assign categories
+GHS_SMOD_vienna_clean <- terra::as.factor(
+  GHS_SMOD_vienna_clean
+)
+levels(GHS_SMOD_vienna_clean) <- smod_classes
+
+# Extract the current extent (bounding box)
+e <- ext(GHS_SMOD_vienna_clean)
+# Expand by a scale factor (e.g., multiply the width and height by 1.1)
+e_expanded <- e * 1.1
+# Convert to a SpatVector polygon, then to an sf object
+sf_extent <- st_as_sf(vect(e_expanded, crs = "EPSG:3416"))
+```
+
+```{r day9mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_shape(GHS_SMOD_vienna_clean, bbox = sf_extent) + tm_title("Is everywhere urban for Vienna?", fontfamily = "serif", fontface = "bold") + 
+  tm_title("\nAn insight from Global Human Settlement Layer (GHSL) Settlement Model (SMOD), 2025-2030", fontfamily = "serif", size = 0.8) + tm_basemap("OpenStreetMap.DE") +
+  tm_raster(col_alpha = 0.5,palette = "Set1",
+    col.legend = tm_legend("GHS-SMOD classification",
+      show = TRUE
+    )
+  ) +
+  tm_layout(
+    frame = TRUE,
+    legend.outside = TRUE
+  ) +
+  tm_grid(lines = T) +
+tm_crs(3416) +tm_credits(
+    "© GAUL | GHSL | GEE | OSM",size = 0.5,
+    position = c("right", "bottom"), bg = TRUE
+  )+
+  tm_credits(
+    "9/30DayMapChallenge, 2026",size = 0.5,color = "grey30",
+    position = c("right", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.5,
+    position = c("right", "bottom"), bg = TRUE
+  ) + tm_options(component.autoscale = FALSE)
+```
+
+# Prompting only
+
+> **Create image** Please create a map for me to show one-day daily temperature at the community level of Poland. Please generate the title according to the date of observation. There is no restriction for the color scheme in the legend, but it should be color-blind- friendly.
+Consider the purpose of this map is for weather forecasting torwards the public, please choose the style for the coordinate system, north narrow, and scale bar accordingly. Please mark the data source at the left bottom of the map. Finally, please add the following three-line credits on the right bottom of the map in dark grey: "10/30DayMapChallenge, 2026", "Map: ChatGPT `your version`", "Prompts: Xiao Cui".
+
+![Day 11](data/Map_30_10th_prompts.png){width=80%}
+
+# Senses: Sound
+```{r, day11mapping, eval = FALSE}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_shape(bbox) +
+  tm_polygons(
+    fill = "grey50",
+    col = NA
+  ) +
+  tm_shape(livehouses) +
+  tm_symbols(
+    fill = "yellow",
+    size = 1,
+    col = "#FFF4A3",
+    lwd = 2, fill.legend = tm_legend("Night clubs", show = TRUE)
+  ) +
+  tm_layout(
+    bg.color = "grey20",
+    outer.bg.color = "grey20",
+    frame = FALSE
+  ) +
+  tm_title(
+    "Where are night clubs in Seoul?",
+    color = "#FFFFFF",
+    position = tm_pos_out("center", "top")
+  ) +tm_options(component.autoscale = TRUE) +tm_credits(
+    "© OSM",size = 0.8,color = "white",
+    position = c("left", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "\n11/30DayMapChallenge, 2026",size = 0.6,color = "white",
+    position = c("left", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "white",size = 0.6,
+    position = c("left", "bottom"), bg = FALSE
+  )
+```
+
+![Day 11](data/Day11_sound.png){width=80%}
+
+# Power
+```{r day12pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+# load data
+boundary_sg_sf <- readRDS("data/boundary_sg_sf.rds")
+school_sg_sf <- readRDS("data/school_sg_sf.rds")
+# bbox for inset map: CR
+bb_centre <- tmaptools::bb(boundary_sg_sf[boundary_sg_sf$REGION_C == "CR",], ext = 1.0)
+# inset plot
+gg1 <- ggplot(boundary_sg_sf, aes(REGION_C, n_schools)) + 
+  geom_col() +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = NULL, y = "Count") +
+  theme_minimal() + labs(title = "Number of schools\nper region") +
+  theme(plot.title = element_text(size = 8),axis.title = element_text(size = 7), axis.text = element_text(size = 5))
+```
+
+```{r day12mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+tm_shape(boundary_sg_sf) +
+  tm_polygons(fill = "grey90", fill_alpha = 0.5, col = "blue1")+ tm_basemap("Esri.WorldStreetMap") +
+  tm_shape(school_sg_sf) +
+tm_title("Schools of Singapore", fontfamily = "serif", fontface = "bold") +
+  tm_title("Land Transport Authority (LTA), 2024", fontfamily = "serif", size = 1) +
+  tm_polygons(fill = "black") + 
+  tm_add_legend(
+    type = "polygons",
+    labels = "Schools",
+    fill = "black",
+    position = c("left", "top")
+  ) + tm_scalebar(position = c("left", "top"), bg =FALSE) +
+  tm_credits(
+    "© data.gov.sg",size = 0.8,color = "grey10",
+    position = c("right", "bottom"), bg = TRUE
+  )+
+  tm_credits(
+    "\n12/30DayMapChallenge, 2026",size = 0.6,color = "grey30",
+    position = c("right", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.6,
+    position = c("right", "bottom"), bg = TRUE
+  ) +tm_options(component.autoscale = FALSE) + tm_title("CENTRAL REGION (CR)", group_id = 1, size = 0.7, bg = TRUE) + tm_inset(bb_centre, group_id = 1, height = 10, width = 10, main_frame = TRUE, main_frame.color = "red")  +
+  tm_components(1, position = c("right", "top")) +
+  tm_inset(gg1, position = c("left", "bottom")) 
+```
+
+# Interactions
+
+The link of the interactive application: <https://ee-xiaocui.projects.earthengine.app/view/ndwiui30daymcxcui>
+
+The link of the primary code used in the application: <https://code.earthengine.google.com/44a6e215b35db2cda0a30b683ef59134>
+
+![Day 13: A screenshot of the interactive application](data/Day13_interactions.png){width=80%}
+
+# Borgesian map
+
+The data can be downloaded at: <https://cms.geo.admin.ch/Topo/swisssurface3d/swissSURFACE3D_example.zip>
+
+More information about swissSURFACE3D: <https://www.swisstopo.admin.ch/en/height-model-swisssurface3d>
+
+![Day 14](data/Day14_map_borgesian.png){width=80%}
+
+# Inside out
+
+```{r day15pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+# Load world map data
+world <- ne_countries(scale = "medium", returnclass = "sf")
+# Define an inverted Cylindrical Equal Area (Peters) projection using +axis=wsu
+inverted_crs <- "+proj=cea +lat_ts=45 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +axis=wsu"
+world_inverted <- st_transform(world, crs = inverted_crs)
+
+# Load glaciers data
+glaciers <- ne_download(
+  scale = 50,
+  type = "glaciated_areas",
+  category = "physical",
+  returnclass = "sf"
+)
+glaciers_inverted <- st_transform(glaciers, crs = inverted_crs)
+# Add a categorical column
+glaciers_inverted$legend_label <- "Glaciated Areas"
+```
+
+```{r day15mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+ggplot() + geom_sf(data = world_inverted, fill = "grey95", color = "white", linewidth = 0.2) +
+  geom_sf(
+    data = glaciers_inverted,
+    aes(fill = legend_label),
+    color = "steelblue",
+    linewidth = 0.2,
+    show.legend = TRUE
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    values = c("Glaciated Areas" = "steelblue"),
+    breaks = "Glaciated Areas",
+    drop = FALSE
+  ) +
+  guides(
+    fill = guide_legend(
+      override.aes = list(
+        color = "steelblue",
+        linewidth = 0.2
+      )
+    )
+  ) +
+  theme_minimal() +
+  theme(legend.text = element_text(family = "serif"),
+    legend.position = "right"
+  ) + coord_sf(
+    datum = st_crs(inverted_crs)) +
+  scale_x_continuous(labels = function(x) format(x, scientific = FALSE)) +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
+  labs(x = "X", y = "Y", 
+    title = "Antarctica: named from 'Anti Arctic'",
+    subtitle = "But where is Arctic?",
+    caption = c("\n15/30DayMapChallenge, 2026", "\n© rnaturalearth\nMap: Xiao Cui"
+  )) +
+  theme(plot.title = element_text(family = "serif", face = "bold", size = 20),
+        plot.subtitle = element_text(family = "serif", size = 18),
+        plot.caption = element_text(family = "serif", size = 10, color = "grey20",hjust = c(0, 1)))
+```
+
+# Collaborative map
+
+```{r day16pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+boroughs <- base::readRDS("data/boroughs.rds")
+```
+
+```{r day16mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+# Map 1: Custom legend
+t1 <- tm_shape(boroughs) + tm_title("Population in London Boroughs (2025)") +
+  tm_title("A collaborative map with me of the past", size = 0.9, color = "gold4") +
+  tm_polygons(
+    fill = "pop_per_km2",
+    fill.scale = tm_scale_intervals(
+      values = "brewer.yl_gn"
+    ),
+    fill.legend = tm_legend(
+      title = "Population per km2",
+      na.show = FALSE
+    )
+  ) +
+  tm_credits(
+    "© CityPopulation.DE & TFL London Boroughs",
+    size = 0.5,
+    color = "grey10",
+    position = c("left", "bottom"),
+    bg = TRUE
+  ) +
+  tm_credits(
+    "\n16/30DayMapChallenge, 2026",
+    size = 0.5,
+    color = "grey30",
+    position = c("right", "bottom"),
+    bg = TRUE
+  ) +
+  tm_credits(
+    "Map: Xiao Cui (2024 & current)",
+    color = "grey30",
+    size = 0.5,
+    position = c("right", "bottom"),
+    bg = TRUE
+  )  + tm_options(component.autoscale = FALSE)
+
+# Map 2: Hide legend completely
+t2 <- tm_shape(boroughs) +
+  tm_polygons(
+    fill = "pop_per_km2",
+    fill.scale = tm_scale_intervals(
+      values = "brewer.yl_gn"
+    ),
+    fill.legend = tm_legend_hide()
+  ) +
+  tm_facets_wrap(
+    "borough",
+    nrow = 4,
+    ncol = 8
+  )  + tm_options(component.autoscale = FALSE)
+
+# Combine maps
+tmap_arrange(t1, t2, ncol = 1)
+```
+
+# Light & dark
+
+```{r, day17mapping, eval = FALSE}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_shape(r) + tm_basemap("Esri.WorldStreetMap", alpha = 0.2) +
+  tm_raster(
+    col = names(r)[1],
+    col.scale = tm_scale_continuous(
+      values = c("black", "yellow"),
+      midpoint = 100,
+      value.na = "transparent"
+    ),
+    col.legend = tmap::tm_legend(
+            title = "Nighttime light radiance",na.show = FALSE)
+  ) + 
+  tm_title(
+    text = "Nighttime lights in Jordan: 2026.11.15",
+    size = 1,
+    fontface = "bold"
+  ) +
+  tm_layout(scale = 1, 
+    frame = TRUE,
+    inner.margins = c(0.1, 0.1, 0.1, 0.1),
+    bg.color = "white",
+    outer.bg.color = "white"
+  )  +tm_credits(
+    "© ESDS | BlackMarbleR",size = 0.6,
+    position = c("left", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "\n17/30DayMapChallenge, 2026",size = 0.6,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.6,
+    position = c("right", "bottom"), bg = FALSE) + tm_options(component.autoscale = FALSE)
+```
+
+![Day 17](data/Day17_map_lightdark.png){width=80%}
+
+# NULL
+
+```{r day18pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+roi_sf <- gadm(country = "ITA", level=1, path = tempdir())
+
+# Convert DMS to decimal degrees
+lat <- 44 + 24/60 + 36.46/3600
+lon <- 8 + 55/60 + 31.86/3600
+
+# Create sf point
+point_sf <- data.frame(
+  lon = lon,
+  lat = lat
+) |>
+  st_as_sf(
+    coords = c("lon", "lat"),
+    crs = 4326
+  )
+point_sf <- point_sf |>
+  dplyr::mutate(name = "GENOVA")
+```
+
+```{r, day18mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_basemap("Esri.WorldTerrain") +
+  tm_title("Where we define vertical '0.00 m'\nin Italy?", fontfamily = "serif") +
+  tm_shape(roi_sf) +
+  tm_fill(
+    fill = "grey60",
+    fill_alpha = 0.5
+  ) + 
+  tm_borders(col = "grey60", lwd = 0.5, lty = "dashed") + 
+  tm_shape(point_sf) + tm_symbols(shape = 23, fill = "blue")+
+  tmap::tm_graticules(
+    labels.size = 0.5, crs = 6875
+  ) +
+  tm_text(text = "The Port of Genova", size = 0.8, ymod = 1.2) +tm_credits(
+    "© ISPRA",size = 0.9,
+    position = c("left", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "\n18/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("right", "bottom"), bg = FALSE
+  )
+```
+
+# Senses: Smell
+```{r day19pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+
+osmanthus_Hunan_sf <- base::readRDS("data/osmanthus_Hunan_sf.rds")
+roi_hunan_sf <- base::readRDS("data/roi_hunan_sf.rds")
+
+icon <- tmap_icons("data/pngwing.png", width = 10, height = 10)
+```
+
+```{r, day19mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_basemap("Esri.NatGeoWorldMap", alpha = 0.5) + tm_title("Where can you smell osmanthus in Hunan?", fontfamily = "serif") + 
+  tm_shape(roi_hunan_sf) + tm_borders() +
+tm_shape(osmanthus_Hunan_sf) +
+  tm_symbols(shape = icon) +
+  tm_graticules(crs = 4480) + tm_options(component.autoscale = FALSE) +tm_credits(
+    "© GBIF",size = 0.9,
+    position = c("left", "bottom"), bg = TRUE
+  )+
+  tm_credits(
+    "\n19/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("left", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("left", "bottom"), bg = TRUE
+  ) + tm_scalebar(position = c("right", "bottom"), bg = FALSE)
+```
+
+# Hexagons
+
+```{r day20mapping, eval = FALSE}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tgg1 <- tm_shape(roi_sf_l2) + tm_basemap("OpenTopoMap", alpha = 0.2) + tm_title("Adminstrative boundaries of Ireland", fontfamily = "serif", size = 1) + tm_title("original geography", fontfamily = "serif", color = "grey50", size = 0.9) +
+  tm_borders(col = "grey10", lwd = 1.5)  + tm_options(component.autoscale = FALSE) + tm_layout(frame = FALSE)
+
+tgg2 <- tm_shape(roi_hex_sf_l2) + tm_basemap("OpenTopoMap", alpha = 0.2) +tm_title("Hexagonal grid of Ireland", fontfamily = "serif", size = 1) + tm_title("preserving the original geography", fontfamily = "serif", size = 0.8, color = "grey50") +
+  tm_borders(col = "grey10", lwd = 1.5) + tm_options(component.autoscale = FALSE) + tm_layout(frame = FALSE)
+
+tgg3 <- tm_shape(clipped_grid_5k)  + tm_title("Hexagonal grid of Ireland", fontfamily = "serif", size = 1) + tm_title("5000-meter cell diameter (3724 cells)", fontfamily = "serif", size = 0.8, fontface = "bold") + tm_basemap("OpenTopoMap", alpha = 0.2) + 
+  tm_borders(col = "grey10", lwd = 0.9)  + tm_options(component.autoscale = FALSE) + tm_layout(frame = FALSE)
+
+tgg4 <- tm_shape(clipped_grid_2k) + tm_basemap("OpenTopoMap", alpha = 0.2) +
+  tm_borders(col = "grey10", lwd = 0.9) + tm_title("Hexagonal grid of Ireland", fontfamily = "serif", size = 1) + tm_title("2000-meter cell diameter (21794 cells)", fontfamily = "serif", size = 0.8, fontface = "bold") + tm_options(component.autoscale = FALSE) + tm_credits(
+    "\n20/30DayMapChallenge, 2026",size = 0.5,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.5,
+    position = c("right", "bottom"), bg = FALSE
+  ) + tm_layout(frame = FALSE)
+
+tmap_arrange(tgg1, tgg2, tgg3, tgg4, ncol = 2)
+```
+
+![Day 20](data/Day20.png){#fig-diagram fig-alt="Day 20" width=80%}
+
+# OpenStreetMap
+```{r day21pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+GS_macao <- sf::st_read("data/export_macao.geojson") |>
+  filter(st_geometry_type(geometry) %in% c("POLYGON", "MULTIPOLYGON"))
+
+GS_macao <- GS_macao |>
+  unite(Type, c(landuse, leisure), sep = " ", remove = FALSE,
+    na.rm = TRUE)
+```
+
+```{r, day21mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tm_shape(GS_macao) + tm_basemap("OpenStreetMap", alpha = 0.3) +
+  tm_polygons(
+    fill = "Type",
+    fill.scale = tm_scale_categorical(values = "matplotlib.yl_gn"),
+    col = NA,
+    fill.legend = tm_legend(position = tm_pos_out("right", "center"))
+  ) + tm_title(
+    "Green space in Macao",
+    fontfamily = "serif",
+    position = tm_pos_out("center", "top")
+  ) +tm_options(component.autoscale = TRUE) +tm_credits(
+    "© OSM",size = 0.8,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "\n21/30DayMapChallenge, 2026",size = 0.6,color = "grey30",
+    position = c("left", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.6,
+    position = c("left", "bottom"), bg = FALSE
+  ) 
+```
+
+# Projections
+```{r day22pre}
+Africa = World[World$continent == "Africa", ]
+```
+
+```{r, day22mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tm_shape(Africa, crs = "+proj=robin") +
+    tm_cartogram(size = "*pop_est", 
+                 fill = "well_being",
+                 fill.scale = tm_scale_intervals(values = "-hcl.green_orange"),
+                 fill.legend = tm_legend("Well being\n(from 0 to 10)")
+                 ) +
+tm_title("Well being in Africa", fontfamily = "serif", fontface = "bold") +
+  tm_title("A contiguous cartogram distorted by population", fontfamily = "serif", color = "grey40", size = 1) +tm_credits(
+    "© HPI",size = 0.7,
+    position = c("left", "bottom"), bg = TRUE
+  )+
+  tm_credits(
+    "\n22/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("left", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("left", "bottom"), bg = TRUE
+  ) +tm_options(component.autoscale = FALSE)
+```
+
+# Senses: Taste
+
+```{r day23mapping, eval = FALSE}
+tm_shape(honey_fao_sf) + 
+  tm_polygons(fill = "grey90",fill_alpha = 0.7)  + tm_title("Honey production in Asia (2023)", fontfamily = "serif",fontface = "bold") +
+  tm_symbols(
+    size = "Value",
+    title = "1000 t",
+    size.legend = tm_legend("Honey\n(1000 t)"),
+    shape =19,
+    fill = "orange",
+    col = "black",
+    lwd = 1,
+    size.scale = tm_scale(values.scale = 3),
+    fill.legend = tm_legend(position = c("right", "center"))
+  ) + tm_credits(
+    "© FAOSTAT",size = 0.7,
+    position = c("left", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "\n23/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("left", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("left", "bottom"), bg = FALSE
+  ) + 
+  tm_logo("data_23rd/honey.png",
+          height = 5,position  = c("right", "bottom"))
+```
+
+![Day 23](data/Day23_map_taste.png){width=80%}
