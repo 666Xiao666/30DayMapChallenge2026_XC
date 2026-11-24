@@ -28,6 +28,8 @@ library(ggplot2)
 library(geogrid)
 library(maptiles)
 library(raster)
+library(tmap.networks)
+library(sfnetworks)
 library(tidyr)
 library(tmaptools)
 library(tmap.cartogram)
@@ -971,6 +973,9 @@ tm_shape(GS_macao) + tm_basemap("OpenStreetMap", alpha = 0.3) +
 
 # Projections
 ```{r day22pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
 Africa = World[World$continent == "Africa", ]
 ```
 
@@ -1031,3 +1036,32 @@ tm_shape(honey_fao_sf) +
 ```
 
 ![Day 23](data/Day23_map_taste.png){width=80%}
+
+# Network
+
+```{r day24pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+filtered_hamburg <- base::readRDS("data/filtered_hamburg.rds")
+cut_nodes <- base::readRDS("data/cut_nodes.rds")
+```
+
+```{r, day24mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tm_shape(filtered_hamburg) + tm_title("933 cut nodes in a\n1km-circular road network", fontfamily = "serif",fontface = "bold") + tm_edges(col = "highway", lwd = 1, col_alpha = 0.5) + tm_shape(cut_nodes) + tm_nodes(lwd = 4, col_alpha = 0.5, col = "red") +
+  tm_graticules(crs = 4326) + tm_credits(
+    "© bbbike",size = 0.9,
+    position = c("left", "bottom"), bg = FALSE
+  )+
+  tm_credits(
+    "24/30DayMapChallenge, 2026",size = 0.5,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.5,
+    position = c("right", "bottom"), bg = FALSE
+  )
+```
