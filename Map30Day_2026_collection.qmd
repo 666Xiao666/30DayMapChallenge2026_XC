@@ -36,6 +36,7 @@ library(tmap.cartogram)
 library(tidyverse)
 library(rnaturalearth)
 library(geodata)
+library(gstat)
 ```
 
 # Points
@@ -1064,4 +1065,64 @@ tm_shape(filtered_hamburg) + tm_title("933 cut nodes in a\n1km-circular road net
     "Map: Xiao Cui",color = "grey30",size = 0.5,
     position = c("right", "bottom"), bg = FALSE
   )
+```
+
+# Is this a map?
+
+```{r day25pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+# Load sample data and convert to an sf object
+data(meuse, package = "sp")
+meuse_sf <- st_as_sf(meuse, coords = c("x", "y"), crs = 28992)
+
+# Create a prediction grid (raster) over the bounding box
+grid_rast <- rast(ext(meuse_sf), resolution = 40, crs = "EPSG:28992")
+grid_pts <- as.points(grid_rast) |> st_as_sf()
+
+# Fit an empirical and theoretical variogram (using log-zinc)
+v_emp <- variogram(log(zinc) ~ 1, data = meuse_sf)
+v_mod <- fit.variogram(v_emp, model = vgm("Sph"))
+
+# Perform Ordinary Kriging
+krig_res <- krige(
+  formula = log(zinc) ~ 1,
+  locations = meuse_sf,
+  newdata = grid_pts,
+  model = v_mod
+)
+
+# Calculate Kriging Standard Error (Uncertainty)
+krig_res$krig_se <- sqrt(krig_res$var1.var)
+
+# Convert back to a SpatRaster for easy plotting/exporting
+se_rast <- rasterize(vect(krig_res), grid_rast, field = "krig_se")
+```
+
+```{r, day25mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tm_shape(se_rast) + tm_title("Uncertainty map of zinc concentrations\nin the Meuse River", fontfamily = "serif", fontface = "bold") + 
+  tm_title("Results from Ordinary Kriging", fontfamily = "serif", size = 1.2, color = "grey30") +
+  tm_raster(title = "Std. Error\n(log ppm)",col_alpha = 0.5,palette = "magma",
+    col.legend = tm_legend(show = TRUE)
+  ) +
+  tm_layout(
+    frame = TRUE,
+    legend.outside = TRUE
+  ) +
+  tm_graticules(n.x = 5, col = "grey90") +tm_credits(
+    "© sp",size = 0.8,
+    position = c("left", "top"), bg = FALSE
+  )+
+  tm_credits(
+    "\n25/30DayMapChallenge, 2026",size = 0.6,color = "grey30",
+    position = c("left", "top"), bg = FALSE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.6,
+    position = c("left", "top"), bg = FALSE
+  ) + tm_options(component.autoscale = FALSE)
 ```
