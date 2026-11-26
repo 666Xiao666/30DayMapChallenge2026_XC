@@ -1126,3 +1126,42 @@ tm_shape(se_rast) + tm_title("Uncertainty map of zinc concentrations\nin the Meu
     position = c("left", "top"), bg = FALSE
   ) + tm_options(component.autoscale = FALSE)
 ```
+
+# Water
+The map in the html looks occupied, but everything would be fine if it were exported by `tmap_save`.
+
+```{r day26pre}
+#| code-summary: "load data"
+#| code-fold: true
+#| code-line-numbers: false
+RIVERS <- ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical', returnclass = "sf")
+threeParallelRivers_sf <-  RIVERS |>
+  dplyr::filter(name == "Nu" | name == "Jinsha" | name == "Lancang")
+
+threeParallelArea_sf <- sf::st_read("data/WDPA_WDOECM_Nov2026_Public_900881.gdb", layer = "WDPA_WDOECM_poly_Nov2026_900881")
+
+threeParallelArea_bb <- tmaptools::bb(threeParallelArea_sf, ext = 1.1)
+```
+
+```{r, day26mapping}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+
+tm_shape(threeParallelRivers_sf) +
+  tm_lines(col = "steelblue1", lwd = 5, col_alpha = 0.9) + tm_text(text = "name", fontface = "bold", size = 1.4) + tm_basemap("OpenStreetMap") + tm_shape(threeParallelArea_sf) +
+  tm_polygons(fill = "#698B69", col = "#698B69") +  tm_credits(
+    "© Protected Planet | rnaturalearth",size = 0.9,
+    position = c("right", "bottom"), bg = TRUE
+  )+ tm_title("Three Parallel Rivers Region", fontfamily = "serif",fontface = "bold") +
+  tm_credits(
+    "\n26/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("right", "bottom"), bg = TRUE
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("right", "bottom"), bg = TRUE
+  ) + tm_title("Three Parallel Rivers of\nYunnan Protected Areas", group_id = 1, size = 1.1, bg = TRUE) + tm_inset(threeParallelArea_bb, height = 12, width = 12, main_frame = TRUE, main_frame.color = "blue", box_frame.color = "blue", group_id = 1)  + tm_components(1, position = c("left", "bottom")) + tm_scalebar(position = c("right", "top"))
+```
+
