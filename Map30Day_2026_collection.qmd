@@ -5,12 +5,15 @@ date: "`r Sys.Date()`"
 theme: minty
 lang: en
 warning: false
+message: false
 cache: true
 number-sections: true
 format:
   html:
     toc: true
     toc-location: "left-body"
+    toc-title: Contents
+    toc-expand: true
     code-fold: show
     code-tools: true
 ---
@@ -95,7 +98,7 @@ tm_basemap("OpenStreetMap") +
 
 # Lines
 
-```{r day2pre}
+```{r day2pre, message = FALSE}
 #| code-summary: "load data"
 #| code-fold: true
 #| code-line-numbers: false
@@ -207,7 +210,7 @@ map_ppt
 
 # Polygons
 
-```{r day3pre}
+```{r day3pre, message = FALSE}
 #| code-summary: "load data"
 #| code-fold: true
 #| code-line-numbers: false
@@ -278,7 +281,7 @@ ggplot() +
 
 # Senses: Sight
 
-```{r day5pre}
+```{r day5pre, message = FALSE}
 #| code-summary: "load data"
 #| code-fold: true
 #| code-line-numbers: false
@@ -1008,6 +1011,9 @@ tm_title("Well being in Africa", fontfamily = "serif", fontface = "bold") +
 # Senses: Taste
 
 ```{r day23mapping, eval = FALSE}
+#| code-summary: "mapping"
+#| code-fold: true
+#| code-line-numbers: false
 tm_shape(honey_fao_sf) + 
   tm_polygons(fill = "grey90",fill_alpha = 0.7)  + tm_title("Honey production in Asia (2023)", fontfamily = "serif",fontface = "bold") +
   tm_symbols(
@@ -1165,3 +1171,65 @@ tm_shape(threeParallelRivers_sf) +
   ) + tm_title("Three Parallel Rivers of\nYunnan Protected Areas", group_id = 1, size = 1.1, bg = TRUE) + tm_inset(threeParallelArea_bb, height = 12, width = 12, main_frame = TRUE, main_frame.color = "blue", box_frame.color = "blue", group_id = 1)  + tm_components(1, position = c("left", "bottom")) + tm_scalebar(position = c("right", "top"))
 ```
 
+# New tool
+
+```{python, day27, eval = FALSE}
+#| code-summary: "data & mapping"
+#| code-fold: true
+#| code-line-numbers: false
+import ee
+import matplotlib.pyplot as plt
+from geemap import cartoee
+
+dem = ee.Image("CGIAR/SRTM90_V4")
+
+# Define the Alpine bounding box in [East, South, West, North] format
+alpine_region = [16.5, 43.5, 5.0, 48.5]
+
+# Set visualization parameters (elevation in meters)
+vis_params = {
+    "min": 0,
+    "max": 4000,
+}
+cmap = "terrain"  # Matplotlib colormap suited for elevation
+
+# Create the figure and render the map
+fig = plt.figure(figsize=(12, 8))
+ax = cartoee.get_map(dem, region=alpine_region, vis_params=vis_params, cmap=cmap)
+
+# Add cartographic elements
+cartoee.add_colorbar(
+    ax,
+    vis_params=vis_params,
+    cmap=cmap,
+    loc="right",
+    label="Elevation (m)",
+    orientation="vertical",
+)
+cartoee.add_gridlines(ax, interval=[2.0, 1.0], linestyle="--")
+cartoee.add_scale_bar_lite(ax, length=100, xy=(0.1, 0.08), fontsize=10, color="black", unit="km")
+cartoee.add_north_arrow(ax, text="N", xy=(0.92, 0.92), arrow_length=0.08, text_color="black", arrow_color="black")
+
+# Add country borders and title
+ax.coastlines(resolution="10m", color="black", linewidth=0.8)
+ax.set_title("Alpine Region Elevation Map (SRTM)", fontsize=14, pad=12)
+# Add map credits
+ax.text(
+    0.985, 0.025,
+    "© CGIAR | Google Earth Engine | geemap\n"
+    "27/30DayMapChallenge, 2026\n"
+    "Map: Xiao Cui",
+    transform=ax.transAxes,
+    fontsize=9,
+    color="0.3",
+    ha="right",
+    va="bottom",
+    linespacing=1.5,
+    zorder=100
+)
+# 7. Save and display the map
+cartoee.savefig(fig, fname="Day27_newTool.png", dpi=600, bbox_inches="tight")
+plt.show()
+```
+
+![Day 27](data/Day27_newTool.png){width=80%}
