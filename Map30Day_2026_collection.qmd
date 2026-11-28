@@ -1,6 +1,8 @@
 ---
 title: "30DayMapChallenge 2026"
-author: "Xiao Cui"
+author: 
+  - name: "Xiao Cui"
+    orcid: 0009-0003-7867-3184
 date: "`r Sys.Date()`"
 theme: minty
 lang: en
@@ -11,15 +13,49 @@ number-sections: true
 format:
   html:
     toc: true
-    toc-location: "left-body"
+    toc-location: left
     toc-title: Contents
-    toc-expand: true
+    toc-expand: false
     code-fold: show
     code-tools: true
 ---
 
+:::: {layout="[ 15, 85 ]"}
+
+::: {#first-column}
+![](data/profile.png)
+:::
+
+::: {#second-column}
+[**About me:** This is my first time to attend [Map30DayChallenge](https://30daymapchallenge.com/). As a beginner in GIScience, I usually use R and other open-source tools for mapping. Benifited from such reproducibility, I would like to share most of my workflows on this page. Happy mapping! 😉]{style="color: chocolate;"}
+:::
+
+::::
+
+**Availability**: 
+
+::: {.list-table}
+- - **Map & code & [data](https://github.com/666Xiao666/30DayMapChallenge2026_XC/tree/main/data):**
+  - [Day 1](#points), [Day 2](#lines), [Day 3](#polygons), [Day 5](#senses-sight)
+  - [Day 6](#vintage), [Day 7](#minute-map), [Day 8](#utopia), [Day 9](#urban-rural)
+  - [Day 12](#power), [Day 15](#inside-out)
+  - [Day 16](#collaborative-map), [Day 18](#null), [Day 19](#senses-smell)
+  - [Day 21](#openstreetmap), [Day 22](#projections), [Day 24](#network), [Day 25](#is-this-a-map)
+  - [Day 26](#water), [Day 27](#new-tool) [(in Python)]{.smallcaps}, [Day 28](#senses-feeling), Day 29.
+
+- - **Map & schematic code:**
+  - [Day 4](#clusters), [Day 11](#senses-sound), [Day 17](#light--dark), [Day 20](#hexagons), [Day 23](#senses-taste).
+
+- - **Map without data and/or code:**
+  - [Day 10](#prompting-only), [Day 13](#interactions) [(primary GEE code is available)]{.smallcaps}, [Day 14](#borgesian-map), Day 30.
+:::
+
+**Note**: Some maps in this html looks occupied, but everything would be fine if they were exported by [`tmap_save`](https://r-tmap.github.io/tmap/reference/tmap_save.html). The instructions of each map are from my [LinkedIn](https://www.linkedin.com/in/xiaocui0312/) posts.
+
+**Now let's start!**
+
 ```{r pre}
-#| code-summary: "load packages"
+#| code-summary: "Load packages"
 #| code-fold: true
 #| code-line-numbers: false
 library(sf)
@@ -44,8 +80,10 @@ library(gstat)
 
 # Points
 
+For the topic "point", I used a proportional symbol map to present a theme / place that I am not familiar with: doctors per province in the Netherlands. 🧐 
+
 ```{r day1pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 doctors_sf <- base::readRDS("data/doctors_sf.rds")
@@ -98,8 +136,10 @@ tm_basemap("OpenStreetMap") +
 
 # Lines
 
-```{r day2pre, message = FALSE}
-#| code-summary: "load data"
+I am a bit off the topic "lines" by mapping a sole line, the 100th Meridian West, which marks differences between aridity and humidity in the United States. Does the map today indicate that this climatic boundary shift a bit in the recent year(s)? 🫣
+
+```{r day2pre, message = FALSE, results = "hide"}
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 grid_us_sf <- sf::st_read("data/ne_110m_graticules_10.shp")
@@ -210,8 +250,11 @@ map_ppt
 
 # Polygons
 
+For today's topic "polygons", this map say we can present two polygons by using one polygon and an appropriate base map (surprisingly or not!). 👌
+Cape Rodney-Okakari Point Marine Reserve, a popular torism destination in New Zealand, includes a large area of surrounding land. The remaining part of Goat Island then "serves" as the interior ring of the marine reserve. 💍⛵ 
+
 ```{r day3pre, message = FALSE}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 cape_sf <- sf::st_read("data/protected-areas.gpkg") |>
@@ -258,8 +301,11 @@ tm_basemap("Stadia.StamenWatercolor") +
 
 # Clusters
 
+"Clusters", today's topic, is my start for spatial analysis, so it can be a bit bashful for me to map something about it (can anyone get this point?). 😶‍🌫️
+I used Spatio-Temporal Density-Based Spatial Clustering of Applications with Noise (ST-DBSCAN) to distingush "stops" and "moves" for my one-day GPS trajectories (10-second sampling). For each stop, points were rendered as a convex hull to show my activity places.  🏠🏢🍔
+
 ```{r, day4mapping, eval = FALSE}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 ggplot() +
@@ -281,8 +327,12 @@ ggplot() +
 
 # Senses: Sight
 
-```{r day5pre, message = FALSE}
-#| code-summary: "load data"
+For today's topic "senses: sight", I intended to map something simple but memorable.  ✈️
+Many years ago (before the COVID time), when I traveled to Europe for the first time, Montmartre was not the first destination but was the first spot that I considered stunning. I can't remember what exactly attracted me: surrounding landmarks, night scape, or the tavern where I used the restroom? Anyhow, a pleasant feeling embedded in my mind till today. 👻
+Thanks to today's map, I went back to my first-time European travel once more. 🤗
+
+```{r day5pre, message = FALSE, results = "hide"}
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 point_montmartre_df <- data.frame(
@@ -301,7 +351,7 @@ bg_tiles <- maptiles::get_tiles(x = point_montmartre_sf, provider = "Esri.WorldI
 ```
 
 ```{r day5mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(bg_tiles) +
@@ -327,8 +377,11 @@ tm_title("Snapshot: Montmartre, Paris", fontfamily = "serif", fontface = "bold")
 
 # Vintage
 
+Today's topic "Vintage" is quite challenging, as it's a typical knowledge gap for me. The final map took me about 20 minutes, but I spent much time on conception.📔 
+With today's Open Street Map (OSM) data, I imitated a stamp-style Ferraris map (map of the Austrian Netherlands) to present the old city of Ghent, which had been mapped by Joseph de Ferraris during his era. 🗺️🫡
+
 ```{r day6pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 ghent_buildings <- base::readRDS("data/ghent_buildings.rds")
@@ -336,7 +389,7 @@ ghent_buildings_multi <- base::readRDS("data/ghent_buildings_multi.rds")
 ```
 
 ```{r day6mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -367,8 +420,11 @@ tm_shape(ghent_buildings_multi) +
 
 # 10 minute map
 
+With around 9 minutes, I finished today's theme "10-minute map". With the "World" data from the tmap package (and my semi-prepared code a few days ago 😏), the final map looks qualified, doesn't it? ✔️
+The imperfect part is also obvious: the legend should have been at the right of the layout, instead of the bottom like now. 🫠
+
 ```{r day7pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 South_America <- World[World$continent == "South America", ]
@@ -377,7 +433,7 @@ South_America <- South_America |>
 ```
 
 ```{r day7mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -405,8 +461,10 @@ tm_title("Income Group, South America, 2024", fontfamily = "serif", fontface = "
 
 # Utopia
 
+For today's topic, "Utopia", I mapped the current world, showing lands, rivers, and oceans. I know an ideal society is quite challenging to create, but people's beautiful qualities (kindness, wisdom, etc.) can make this world much better to achieve that goal. 👁️
+
 ```{r day8pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 world_union <- sf::st_union(World)
@@ -439,8 +497,11 @@ tm_layout(earth_boundary = TRUE,
 
 # Urban-rural
 
+"Urban-rural" relationships seem to go against in most cases, but this binary view ignores complicated dynamic patterns of human settlement. 🥸 
+Even for large cities or megacities, an overall high population density doesn't mean everywhere can be defined as "urban" in these cities. Today's human settlement map (Vienna, Austria) can show such complexity clearly. 👀
+
 ```{r day9pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 # load raw data
@@ -481,7 +542,7 @@ sf_extent <- st_as_sf(vect(e_expanded, crs = "EPSG:3416"))
 ```
 
 ```{r day9mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -514,14 +575,20 @@ tm_crs(3416) +tm_credits(
 
 # Prompting only
 
+I followed today's topic "Prompting only" seriously. After inputting prompts and waiting for around 5 minutes, I got this pragmatic weather forecasting map. It is getting cold and please remember to put on more clothes. 🍃🌨️🧥
+
 > **Create image** Please create a map for me to show one-day daily temperature at the community level of Poland. Please generate the title according to the date of observation. There is no restriction for the color scheme in the legend, but it should be color-blind- friendly.
 Consider the purpose of this map is for weather forecasting torwards the public, please choose the style for the coordinate system, north narrow, and scale bar accordingly. Please mark the data source at the left bottom of the map. Finally, please add the following three-line credits on the right bottom of the map in dark grey: "10/30DayMapChallenge, 2026", "Map: ChatGPT `your version`", "Prompts: Xiao Cui".
 
 ![Day 11](data/Map_30_10th_prompts.png){width=80%}
 
 # Senses: Sound
+
+For today's topic "Senses: Sound", I used a dark background to show night context of this map: night clubs (or bars or live houses) can be silent during daytime, but it comes to a different story when it gets darker. 🌃 
+Moreover, can you find one (or two) tricky setting(s) for this map? 🙊
+
 ```{r, day11mapping, eval = FALSE}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -564,8 +631,11 @@ tm_shape(bbox) +
 ![Day 11](data/Day11_sound.png){width=80%}
 
 # Power
+
+"Power", today's topic, is a bit difficult to define or depict. If we limited this topic at a large-scale scope, I would say education can be a power for generations. With that idea, I mapped the schools in Singapore and emphasize their region-level distribution. 🎒🏫
+
 ```{r day12pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 # load data
@@ -583,7 +653,7 @@ gg1 <- ggplot(boundary_sg_sf, aes(REGION_C, n_schools)) +
 ```
 
 ```{r day12mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -617,13 +687,19 @@ tm_title("Schools of Singapore", fontfamily = "serif", fontface = "bold") +
 
 # Interactions
 
-The link of the interactive application: <https://ee-xiaocui.projects.earthengine.app/view/ndwiui30daymcxcui>
+For today's topic "Interactions", I developed a simple Google Earth Engine (GEE) application to map regional annual SO2/NO2/CO/Aerosol, using Sentinel-5P data. 🛰️
+The screenshot below shows a use case. 🧑‍💻👩‍💻
+
+The link of the interactive application (it can be a bit slow to show the map 🙈): <https://ee-xiaocui.projects.earthengine.app/view/ndwiui30daymcxcui>
 
 The link of the primary code used in the application: <https://code.earthengine.google.com/44a6e215b35db2cda0a30b683ef59134>
 
 ![Day 13: A screenshot of the interactive application](data/Day13_interactions.png){width=80%}
 
 # Borgesian map
+
+As a beginner in LiDAR, I think point cloud data is quite suitable for today's topic "Borgesian map": what we can capture from mass data is still in our boundary.  
+🔍 In today's map, I showed a standard workflow to detect trees from point cloud data. 25.01 points/m² is a precise density indeed, but what we aim to learn from such data depends on different contexts and purposes.
 
 The data can be downloaded at: <https://cms.geo.admin.ch/Topo/swisssurface3d/swissSURFACE3D_example.zip>
 
@@ -633,8 +709,12 @@ More information about swissSURFACE3D: <https://www.swisstopo.admin.ch/en/height
 
 # Inside out
 
+For today's topic "Inside out", a real nodus is to select "inside". An interesting view can be: how do we learn about "the outside" with our "inner knowledge"? 👓 
+Using an inverted Cylindrical projection, I mapped glaciated areas over the world. The map asks a geographic question: would our perception about the world be different if we found and named "the south magnetic pole" first? 🔖
+Although Arctic and Antarctica are still at the two poles, the final map reveals another "inside-out" pattern: some of glaciated areas are neither in the arctic circle nor in the antarctica circle. 🧩
+
 ```{r day15pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 # Load world map data
@@ -656,7 +736,7 @@ glaciers_inverted$legend_label <- "Glaciated Areas"
 ```
 
 ```{r day15mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 ggplot() + geom_sf(data = world_inverted, fill = "grey95", color = "white", linewidth = 0.2) +
@@ -700,15 +780,18 @@ ggplot() + geom_sf(data = world_inverted, fill = "grey95", color = "white", line
 
 # Collaborative map
 
+Today's topic "collaborative map" reminded me of the time when I was a beginner in cartography. When I worked on the assignments at that time, I was like: 😫.
+With a lengthy learning curve, I become an advanced beginner nowadays! 🤣 Using data from the study area in previous coursework, I collaborated with me of the past to finish today's theme. 🎁 
+
 ```{r day16pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 boroughs <- base::readRDS("data/boroughs.rds")
 ```
 
 ```{r day16mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -769,8 +852,10 @@ tmap_arrange(t1, t2, ncol = 1)
 
 # Light & dark
 
+Nighttime light is very suitable for today's topic "Light & dark", as it contains these two elements at the same time. 💡Thus, I mapped one-day nighttime light of Jordan, using VNP46A3 data. The contrast in this map reminds us of dynamics between light and dark in the real world. 🌞🌚
+
 ```{r, day17mapping, eval = FALSE}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -813,8 +898,10 @@ tm_shape(r) + tm_basemap("Esri.WorldStreetMap", alpha = 0.2) +
 
 # NULL
 
+I planned to skip today's topic when I found it is "null" (just kidding 😂). If it meant "zero", an interesting symbol in geography would be "sea level datum", which serves as the official zero-meter vertical datum and altimetric reference. I mapped a single station of the National Tide Gauge Network (Italy), but what behind it (or every datum) is always continuous observations over many years with great efforts. ⏳
+
 ```{r day18pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 roi_sf <- gadm(country = "ITA", level=1, path = tempdir())
@@ -837,7 +924,7 @@ point_sf <- point_sf |>
 ```
 
 ```{r, day18mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -869,8 +956,11 @@ tm_basemap("Esri.WorldTerrain") +
 ```
 
 # Senses: Smell
+
+For today's theme "Senses: Smell", it's a great idea to show flower scent. With the observation data from the Global Biodiversity Information Facility (GBIF), I mapped osmanthus in Hunan, China, for its delicate floral (and yummy) perfume. Anyone likes dessert with osmanthus? 😋
+
 ```{r day19pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 
@@ -881,7 +971,7 @@ icon <- tmap_icons("data/pngwing.png", width = 10, height = 10)
 ```
 
 ```{r, day19mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -906,8 +996,11 @@ tm_shape(osmanthus_Hunan_sf) +
 
 # Hexagons
 
+"Hexagons" are common polygons for fine-grained modeling, but how can we feel the differences between "coarse" and "nuanced" more directly? 🤔
+Using 106 municipalities data, I mapped the original administrative boundaries and three hexagonal grids of Ireland under a same scale. Although a 2km-hexagonal grid (right bottom) is not quite fine for current population-level studies, it generates a much larger sample compared with the original administrative boundaries. 🔎
+
 ```{r day20mapping, eval = FALSE}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tgg1 <- tm_shape(roi_sf_l2) + tm_basemap("OpenTopoMap", alpha = 0.2) + tm_title("Adminstrative boundaries of Ireland", fontfamily = "serif", size = 1) + tm_title("original geography", fontfamily = "serif", color = "grey50", size = 0.9) +
@@ -935,8 +1028,11 @@ tmap_arrange(tgg1, tgg2, tgg3, tgg4, ncol = 2)
 ![Day 20](data/Day20.png){#fig-diagram fig-alt="Day 20" width=80%}
 
 # OpenStreetMap
-```{r day21pre}
-#| code-summary: "load data"
+
+For today's topic "OpenStreetMap", I went back to my comfort zone, mapping green spaces defined by the values in "leisure" or "landuse".🌳Maybe Macao is a nice place for playing golf. 🤨
+
+```{r day21pre, results = "hide"}
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 GS_macao <- sf::st_read("data/export_macao.geojson") |>
@@ -948,7 +1044,7 @@ GS_macao <- GS_macao |>
 ```
 
 ```{r, day21mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(GS_macao) + tm_basemap("OpenStreetMap", alpha = 0.3) +
@@ -976,15 +1072,19 @@ tm_shape(GS_macao) + tm_basemap("OpenStreetMap", alpha = 0.3) +
 ```
 
 # Projections
+
+For today's topic "projections", it's difficult for me to pick one up: each projection has their own pros (and also cons).  After a bit of thinking, I chose cartogram, as it's my first time to make a cartogram by myself. 😸
+With fancy tmap.cartogram, I was suprised that I was able to show the distortion of that map as well! 😯
+
 ```{r day22pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 Africa = World[World$continent == "Africa", ]
 ```
 
 ```{r, day22mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(Africa, crs = "+proj=robin") +
@@ -1010,8 +1110,10 @@ tm_title("Well being in Africa", fontfamily = "serif", fontface = "bold") +
 
 # Senses: Taste
 
+Asia is the largest honey producing region with many top producers (and exporters) in recent years. For today's topic "senses: taste", I mapped honey in Asia using "honey" as the paint. 😼 Maybe it's high time to have a cup of honey water after finishing today's map challenge. 😋
+
 ```{r day23mapping, eval = FALSE}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(honey_fao_sf) + 
@@ -1046,8 +1148,10 @@ tm_shape(honey_fao_sf) +
 
 # Network
 
+What first came to my mind was "road network" for today's theme. Using a subset road data of Hamburg, I mapped the network with its identified cut nodes. 🧐 Definitely, the most difficult part of today's mapping is finding related data and preprocessing them to a network. 🤣
+
 ```{r day24pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 filtered_hamburg <- base::readRDS("data/filtered_hamburg.rds")
@@ -1055,7 +1159,7 @@ cut_nodes <- base::readRDS("data/cut_nodes.rds")
 ```
 
 ```{r, day24mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(filtered_hamburg) + tm_title("933 cut nodes in a\n1km-circular road network", fontfamily = "serif",fontface = "bold") + tm_edges(col = "highway", lwd = 1, col_alpha = 0.5) + tm_shape(cut_nodes) + tm_nodes(lwd = 4, col_alpha = 0.5, col = "red") +
@@ -1075,8 +1179,10 @@ tm_shape(filtered_hamburg) + tm_title("933 cut nodes in a\n1km-circular road net
 
 # Is this a map?
 
+For today's topic "Is this a map?", I chose a typical uncertainty map. After finishing that, I attempted to answer today's question: the reliability of such maps depends on the extent of we make certain of "certain". 🥸 
+
 ```{r day25pre}
-#| code-summary: "load data"
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 # Load sample data and convert to an sf object
@@ -1107,7 +1213,7 @@ se_rast <- rasterize(vect(krig_res), grid_rast, field = "krig_se")
 ```
 
 ```{r, day25mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tm_shape(se_rast) + tm_title("Uncertainty map of zinc concentrations\nin the Meuse River", fontfamily = "serif", fontface = "bold") + 
@@ -1134,10 +1240,11 @@ tm_shape(se_rast) + tm_title("Uncertainty map of zinc concentrations\nin the Meu
 ```
 
 # Water
-The map in the html looks occupied, but everything would be fine if it were exported by `tmap_save`.
 
-```{r day26pre}
-#| code-summary: "load data"
+For today's topic "water", I selected the Three Parallel Rivers for mapping (note: I refer to rivers' current (Chinese) name). It's noteworthy that the basemap here presents several kinds of languages. These water bodies nurtured many civilizations, but what we know about the processes is still limited.  📘
+
+```{r day26pre, results = "hide"}
+#| code-summary: "Load data"
 #| code-fold: true
 #| code-line-numbers: false
 RIVERS <- ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical', returnclass = "sf")
@@ -1150,7 +1257,7 @@ threeParallelArea_bb <- tmaptools::bb(threeParallelArea_sf, ext = 1.1)
 ```
 
 ```{r, day26mapping}
-#| code-summary: "mapping"
+#| code-summary: "Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 tmap_mode("plot")
@@ -1173,8 +1280,10 @@ tm_shape(threeParallelRivers_sf) +
 
 # New tool
 
+For today's topic "New tool", I left my comfort zone (R) 🥲 and used geemap (Python) 🥱 for mapping. After finish some intial settings, below is my first static map after several attempts. 😺
+
 ```{python, day27, eval = FALSE}
-#| code-summary: "data & mapping"
+#| code-summary: "Data & Mapping"
 #| code-fold: true
 #| code-line-numbers: false
 import ee
@@ -1233,3 +1342,53 @@ plt.show()
 ```
 
 ![Day 27](data/Day27_newTool.png){width=80%}
+
+# Senses: Feeling
+
+As "feeling" can be complex at times, I chosed a bivariate choropleth map to show two wellbeing indicators: health and environmental quality. For the data shown in small regions, can you find any spatial patterns on this map? 🤔 
+
+```{r day28pre}
+#| code-summary: "Load data"
+#| code-fold: true
+#| code-line-numbers: false
+NUTS_wellbeing_sf <- base::readRDS("data/NUTS_wellbeing_sf.rds")
+```
+
+```{r, day28mapping}
+#| code-summary: "Mapping"
+#| code-fold: true
+#| code-line-numbers: false
+tmap_mode("plot")
+tm_shape(NUTS_wellbeing_sf) + 
+  tm_polygons(
+    fill = tm_vars(c("Health", "Environmental quality"), multivariate = TRUE), fill_alpha = 0.5,
+    fill.scale = 
+      tm_scale_bivariate(
+        scale1 = tm_scale_intervals(style = "kmeans", n = 3, labels = c("L", "M", "H")),
+        scale2 = tm_scale_intervals(style = "kmeans", n = 3, labels = c("L", "M", "H")),
+        values = "cols4all.pu_gn_bivd"), col_alpha = 0.5,
+    fill.legend = tm_legend_bivariate(
+      xlab = "Health",
+      ylab = "Environmental\nquality",
+      xlab.size = 1,
+      ylab.size = 1,
+      item.r = 0,
+      xlab.color = "chocolate",
+      ylab.color = "chocolate",
+      item.width = 1.8,
+      item.height = 1.8,
+      text.size = 0.8,group_id = 1)) +
+tm_title("Wellbeing matrix\nper NUTS 3", z = 0, color = "chocolate4", size = 1,group_id = 1) +
+tm_crs("auto")   + tm_credits(
+    "© EU-R-SPI | eurostat",size = 0.9, color = "grey10",
+    position = c("right", "bottom"), bg = FALSE,fontfamily = "serif"
+  )+ tm_title("Foundations of wellbeing in EU, 2024", fontfamily = "serif",fontface = "bold") +
+  tm_credits(
+    "28/30DayMapChallenge, 2026",size = 0.7,color = "grey30",
+    position = c("right", "bottom"), bg = FALSE,fontfamily = "serif"
+  ) + 
+  tm_credits(
+    "Map: Xiao Cui",color = "grey30",size = 0.7,
+    position = c("right", "bottom"), bg = FALSE,fontfamily = "serif"
+  ) + tm_components(position = c("left", "top"), frame = FALSE, group_id = 1)
+```
